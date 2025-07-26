@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAST1K - Old Starblast.io</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Глобальные стили */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #0a0a1a;
+            color: #fff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Звёздный фон */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* 3D-планета */
+        #planet-container {
+            position: fixed;
+            top: 50%;
+            right: 10%;
+            width: 300px;
+            height: 300px;
+            z-index: -1;
+            transform: translateY(-50%);
+        }
+
+        /* Основной контент */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #ff00cc, #3333ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(255, 0, 204, 0.3);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px rgba(255, 0, 204, 0.3); }
+            to { text-shadow: 0 0 20px rgba(51, 51, 255, 0.6); }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #a0a0ff;
+            margin-bottom: 2rem;
+        }
+
+        /* Карточки с информацией */
+        .card {
+            background: rgba(20, 20, 50, 0.7);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 0, 204, 0.1),
+                rgba(51, 51, 255, 0.1),
+                transparent
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 255, 0.3);
+        }
+
+        /* Кнопка Discord */
+        .discord-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: #fff;
+            background: #5865F2;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            margin: 1rem 0;
+            box-shadow: 0 0 15px rgba(88, 101, 242, 0.5);
+            text-decoration: none;
+        }
+
+        .discord-btn:hover {
+            background: #4752c4;
+            box-shadow: 0 0 25px rgba(88, 101, 242, 0.8);
+            transform: translateY(-3px);
+        }
+
+        /* Анимированные сцены битв */
+        .battle-scene {
+            position: relative;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            margin: 2rem 0;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ship {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: url('https://cdn-icons-png.flaticon.com/512/3618/3618731.png') no-repeat center;
+            background-size: contain;
+            filter: drop-shadow(0 0 5px cyan);
+            animation: shipMove 10s linear infinite;
+        }
+
+        @keyframes shipMove {
+            0% { transform: translateX(-100px) translateY(50px); }
+            50% { transform: translateX(300px) translateY(150px); }
+            100% { transform: translateX(800px) translateY(50px); }
+        }
+
+        .laser-blast {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255, 0, 0, 0.8), rgba(255, 255, 0, 0.8));
+            transform-origin: left;
+            animation: laserFire 0.3s linear;
+        }
+
+        @keyframes laserFire {
+            0% { transform: scaleX(0); opacity: 1; }
+            100% { transform: scaleX(1); opacity: 0; }
+        }
+
+        .explosion {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, rgba(255, 100, 0, 0.8), rgba(255, 0, 0, 0));
+            border-radius: 50%;
+            animation: explode 0.5s ease-out;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        /* Кнопка игры Starblast */
+        .play-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #fff;
+            background: linear-gradient(45deg, #ff8a00, #e52e71);
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 2rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .play-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            #planet-container { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Звёздный фон -->
+    <div class="stars" id="stars"></div>
+
+    <!-- 3D-планета -->
+    <div id="planet-container"></div>
+
+    <div class="container">
+        <header>
+            <h1>FAST1K</h1>
+            <p class="subtitle">Старый игрок Starblast.io | Член клана S2F</p>
+            <a href="https://discord.gg/sky2fly" target="_blank" class="discord-btn" id="joinBtn">
+                <i class="fab fa-discord"></i> Присоединиться к S2F
+            </a>
+        </header>
+
+        <!-- Анимированная сцена битвы -->
+        <div class="battle-scene" id="battleScene">
+            <!-- Корабли и лазеры будут добавлены через JS -->
+        </div>
+
+        <!-- Карточки с информацией -->
+        <div class="card">
+            <h2>🚀 Кто такой FAST1K?</h2>
+            <p>FAST1K — легендарный пилот и стратег в мире <strong>Starblast.io</strong>. Начав как новичок, он быстро стал одним из самых опасных игроков благодаря:</p>
+            <ul>
+                <li>⚡ Молниеносной реакции (пинг < 100ms)</li>
+                <li>🎯 Смертоносной точности (50-60% попаданий)</li>
+                <li>🧠 Тактическому гению (ничего не разработал)</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🛡️ Клан S2F: Sky2Fly</h2>
+            <p>Элитное сообщество, созданное для:</p>
+            <ul>
+                <li>🔹 Борьбы с читерами и токсичными игроками</li>
+                <li>🔹 Развития профессионального комьюнити</li>
+                <li>🔹 Проведения турниров и ивентов</li>
+                <li>🔹 Создания тактических руководств</li>
+            </ul>
+            <p>За 2 года S2F вошёл в ТОП-5 кланов Starblast.io с 300+ победами.</p>
+        </div>
+
+        <!-- Вторая анимированная сцена -->
+        <div class="battle-scene" id="teamBattle">
+            <!-- Командная битва -->
+        </div>
+
+        <div class="card">
+            <h2>💥 Легендарные битвы</h2>
+            <p>S2F участвовал в ключевых сражениях:</p>
+            <ul>
+                <li>🔥 4 vs 12 против клана "HELL" (победа)</li>
+                <li>⚔️ Уничтожение клана <strong>TDR</strong> в Survival Mode (битва 30 vs 30).</li>
+                <li>🌌 Невероятная защита станции в Team Mode (Подробности есть на Ютуб канале PashaSSS ENG).</li>
+            </ul>
+            <p>Самые невероятные битвы в истории Starblast. </p>
+        </div>
+
+        <!-- Кнопка для игры -->
+        <div style="text-align: center;">
+            <a href="https://starblast.io" target="_blank" class="play-btn">Играть в Starblast.io</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2023 FAST1K & S2F Clan. Все права защищены.</p>
+    </footer>
+
+    <script>
+        // Звёздный фон
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 300; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.width = `${Math.random() * 3}px`;
+            star.style.height = star.style.width;
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            starsContainer.appendChild(star);
+        }
+
+        // 3D-планета
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(300, 300);
+        document.getElementById('planet-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(5, 32, 32);
+        const texture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+        const material = new THREE.MeshPhongMaterial({ map: texture });
+        const planet = new THREE.Mesh(geometry, material);
+        scene.add(planet);
+
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+
+        camera.position.z = 10;
+
+        function animatePlanet() {
+            requestAnimationFrame(animatePlanet);
+            planet.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+        animatePlanet();
+
+        // Анимированные битвы
+        function createBattleScene(containerId, shipCount) {
+            const container = document.getElementById(containerId);
+            
+            // Создаём корабли
+            for (let i = 0; i < shipCount; i++) {
+                const ship = document.createElement('div');
+                ship.classList.add('ship');
+                ship.style.left = `${Math.random() * 100}%`;
+                ship.style.top = `${Math.random() * 100}%`;
+                ship.style.animationDuration = `${5 + Math.random() * 10}s`;
+                ship.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(ship);
+                
+                // Лазерные выстрелы
+                setInterval(() => {
+                    const laser = document.createElement('div');
+                    laser.classList.add('laser-blast');
+                    laser.style.left = ship.style.left;
+                    laser.style.top = ship.style.top;
+                    laser.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    container.appendChild(laser);
+                    
+                    setTimeout(() => {
+                        laser.remove();
+                    }, 300);
+                    
+                    // Взрывы
+                    if (Math.random() > 0.7) {
+                        const explosion = document.createElement('div');
+                        explosion.classList.add('explosion');
+                        explosion.style.left = `calc(${ship.style.left} + 20px)`;
+                        explosion.style.top = ship.style.top;
+                        container.appendChild(explosion);
+                        
+                        setTimeout(() => {
+                            explosion.remove();
+                        }, 500);
+                    }
+                }, 1000 + Math.random() * 3000);
+            }
+        }
+
+        createBattleScene('battleScene', 5);
+        createBattleScene('teamBattle', 8);
+
+        // Эффект при наведении на кнопку Discord
+        const joinBtn = document.getElementById('joinBtn');
+        joinBtn.addEventListener('mouseenter', () => {
+            joinBtn.style.transform = 'scale(1.05)';
+        });
+        joinBtn.addEventListener('mouseleave', () => {
+            joinBtn.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+</html>
